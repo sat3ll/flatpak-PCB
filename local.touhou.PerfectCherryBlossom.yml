@@ -1,0 +1,100 @@
+app-id: local.touhou.PerfectCherryBlossom
+
+base: org.winehq.Wine
+runtime: org.freedesktop.Platform
+runtime-version: '19.08'
+sdk: org.freedesktop.Sdk
+
+tags:
+  - proprietary
+
+command: 'launcher.sh'
+
+finish-args:
+  - --socket=pulseaudio
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  - --allow=multiarch
+  - --env=XDG_CONFIG_DIRS=/etc/xdg:/usr/lib/x86_64-linux-gnu/GL:/usr/lib/i386-linux-gnu/GL
+  - --env=WINEDLLPATH=/app/dxvk/lib32:/app/dxvk/lib:/app/lib32/wine/wined3d:/app/lib/wine/wined3d
+  - --env=LC_ALL="ja_JP"
+
+
+inherit-extensions:
+  - org.freedesktop.Platform.Compat.i386
+  - org.freedesktop.Platform.GL32
+
+modules:
+  - name: bspatch
+    buildsystem: simple
+    build-commands:
+      - gcc -o bspatch bspatch.c -lbz2 -O3
+      - install -Dm755 bspatch ${FLATPAK_DEST}/bin
+    cleanup:
+      - "*"
+    sources:
+      # original seems down
+      - type: archive
+        url: https://www.daemonology.net/bsdiff/bsdiff-4.3.tar.gz
+        mirror-urls:
+          - https://deb.debian.org/debian/pool/main/b/bsdiff/bsdiff_4.3.orig.tar.gz
+        sha256: 18821588b2dc5bf159aa37d3bcb7b885d85ffd1e19f23a0c57a58723fea85f48
+
+  - name: wineprefix-premade
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+      env:
+        WINEDLLOVERRIDES: "mscoree=;mshtml=;"
+        WINEARCH: win32
+        WINEPREFIX: "/app/wineprefix-premade"
+    build-commands:
+      - mkdir -p ${WINEPREFIX}
+      - winetricks droid
+
+  - name: th07
+    buildsystem: simple
+    cleanup:
+      - "*.bspatch"
+    build-commands:
+      - 7z x TH07.iso -o"${FLATPAK_DEST}" th07
+      - |
+        bspatch ${FLATPAK_DEST}/th07/custom.exe ${FLATPAK_DEST}/th07/custom.exe custom_exe.bspatch
+        bspatch ${FLATPAK_DEST}/th07/readme.txt ${FLATPAK_DEST}/th07/readme.txt readme_txt.bspatch
+        bspatch ${FLATPAK_DEST}/th07/th07.dat ${FLATPAK_DEST}/th07/th07.dat th07_dat.bspatch
+        bspatch ${FLATPAK_DEST}/th07/th07.exe ${FLATPAK_DEST}/th07/th07.exe th07_exe.bspatch
+      - ln -s /var/config/th07.cfg ${FLATPAK_DEST}/th07/th07.cfg
+      - ln -s /var/data/replay ${FLATPAK_DEST}/th07/replay
+      - ln -s /var/data/score.dat ${FLATPAK_DEST}/th07/score.dat
+      - ln -s /var/cache/log.txt ${FLATPAK_DEST}/th07/log.txt
+      - install -Dm755 -t ${FLATPAK_DEST}/bin launcher.sh
+      - install -Dm644 th07.png ${FLATPAK_DEST}/share/icons/hicolor/32x32/apps/local.touhou.PerfectCherryBlossom.png
+      - install -Dm644 th07.desktop ${FLATPAK_DEST}/share/applications/local.touhou.PerfectCherryBlossom.desktop
+    sources:
+      - type: file
+        path: TH07.iso
+      - type: file
+        path: launcher.sh
+      - type: file
+        path: th07.png
+      - type: file
+        path: th07.desktop
+      - type: file
+        path: patch/custom_exe.bspatch
+      - type: file
+        path: patch/readme_txt.bspatch
+      - type: file
+        path: patch/th07_dat.bspatch
+      - type: file
+        path: patch/th07_exe.bspatch
+
+  - name: thcrap
+    buildsystem: simple
+    build-commands:
+      - unzip thcrap.zip -d "${FLATPAK_DEST}/thcrap-bundle"
+    sources:
+      - type: file
+        url: https://github.com/thpatch/thcrap/releases/download/2020-06-06/thcrap.zip
+        sha256: 35a4ba7359851cf29ceba70e85476a90d604bc9016bcf98f0f74fb022eb970c5

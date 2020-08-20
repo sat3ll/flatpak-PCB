@@ -1,0 +1,20 @@
+[Desktop Entry]
+Version=1.1
+Icon=local.touhou.PerfectCherryBlossom
+Exec=launcher.sh
+Terminal=false
+Type=Application
+Name=Touhou: Perfect Cherry Blossom
+GenericName=Bullet hell game
+Comment=A vertical-scrolling manic shooter and the seventh official game of the Touhou Project
+Categories=Game;ArcadeGame;Shooter
+Keywords=Danmaku;Touhou;PCB
+Actions=Configure;config-select
+
+[Desktop Action Configure]
+Name=Launch THCRAP configure tool
+Exec=launcher.sh thcrap-conf
+
+[Desktop Action config-select]
+Name=Launch patched game
+Exec=launcher.sh config-select
